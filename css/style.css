@@ -1,0 +1,191 @@
+/******************************************
+/* CSS
+/*******************************************/
+
+/* Box Model Hack */
+*{
+  box-sizing: border-box;
+}
+
+/******************************************
+/* LAYOUT
+/*******************************************/
+body {
+  font-family: "Roboto", sans-serif;
+}
+
+:root {
+  --gray: #4c5454;
+  --peach: #FF715B;
+  --green: #1EA896;
+  --brown: #523F38;
+}
+
+/************Header***********/
+#nav {
+  display: flex;
+  justify-content: start;
+  align-items: start;
+  flex-direction: column;
+  height:200px;
+  background-color: var(--gray);
+  box-shadow: 0 2px 4px gray;
+}
+
+#nav h1 {
+  justify-self: center;
+  align-self: center;
+  font-size: 50px;
+  color: white;
+}
+
+#nav input, select {
+  height: 50px;
+  font-size: 25px;
+  border-radius: 5px;
+  margin: 0 0 400px 40px;
+  justify-self: start;
+  align-self: start;;
+  
+}
+
+/**********MAIN*********/
+
+#price {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: center;
+  height: 800px;
+  border: 2px solid gray;
+  border-radius: 2px;
+  background-color: var(--peach);
+  width: 100%;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  width: 30%;
+}
+
+.box {
+  border: 2px solid gray;
+  box-shadow: 2px 0 0 gray;
+  border-radius: 2px;
+  height: 700px;
+  background-color: white;
+}
+#stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto; 
+  padding: 40px;
+}
+
+#stats li {
+  background-color: #f4f4f4;
+  border: 1px solid #ddd;
+  padding: 10px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-size: 20px;
+}
+
+#chart {
+  width: 60%;
+}
+
+.legend {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 12%;
+  height: 700px;
+  background-color: white;
+  font: black;
+  border: 2px solid gray;
+  padding-left: 15px;
+}
+
+
+#ticker-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 0 0 0;
+  margin: 0;
+  height: 750px;
+  list-style: none;
+  overflow-y: auto;
+  width: 100%;
+}
+
+#ticker-nav li, select {
+  margin: 5px 0 0 0;
+  border-bottom: 1px solid black;
+  text-decoration: none;
+  font-size: 20px;
+  font-weight: bold;
+  padding-top: 10px;
+}
+
+#ticker-nav li:hover{
+  background-color: var(--green);
+}
+
+
+#ticker-nav a {
+  text-decoration: none;
+  color: black;
+  font-style: bold;
+}
+
+#ticker-select {
+  display: none;
+}
+
+#legend-list+option {
+  padding: 0;
+  margin: 0;
+  height: 20px;
+}
+
+
+
+/******************************************
+/* ADDITIONAL STYLES
+/*******************************************/
+
+@media screen and (max-width: 800px) {
+  #ticker-nav {
+    display: none;
+  }
+  #price {
+    display: flex;
+    flex-direction: column;
+  }
+
+  #chart {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+
+  .right h1 {
+    display: none;
+  }
+
+  .right {
+    width: 100%
+  }
+
+  #ticker-select {
+    display: inline;
+    height: 100px;
+  }
+}
