@@ -1,23 +1,27 @@
 //GLOBAL VARIABLES//
 const blofin = new ccxt.blofin();
+const bybit = new ccxt.pro.bybit()
 let tickerList = [];
-
 const tickerSelect = document.getElementById("ticker-select");
-let tickerValue = "BTC/USDT:USDT";
+let currentTickerInstance = null;
 let container = document.querySelector("#chart");
 const savedFavorites = JSON.parse(localStorage.getItem("favorites")) || {};
 
-// generateAllData(tickerValue);
 
 class Ticker {
-  constructor(symbol) {
+  constructor(symbol="BTC/USDT:USDT") {
     this.symbol = symbol;
     this.chart=null;
+    this.fetchTimer = null;
   }
 
   async fetchBitcoinPrice() {
     try {
       const ticker = await blofin.fetchTicker(this.symbol);
+      // while (1>0) {
+      //   let ohlcv2 = await bybit.watchOHLCV(this.symbol)
+      //   console.log(ohlcv2)
+      // }
 
       document.getElementById(
         "coin-stats"
@@ -37,7 +41,10 @@ class Ticker {
       document.getElementById("coin-stats").innerText =
         "Error fetching price. Please try again.";
     }
-    setTimeout(() => this.fetchBitcoinPrice(this.symbol), 500);
+    if (this.fetchTimer) {
+      clearTimeout(this.fetchTimer)
+    }
+    this.fetchTimer = setTimeout(() => this.fetchBitcoinPrice(), 500);
   }
 
   async generateAllData () {
@@ -49,7 +56,7 @@ class Ticker {
   async fetchCandles() {
     try {
       let ohlcv = blofin.fetchOHLCV(this.symbol, "1D");
-      console.log(ohlcv)
+
       return ohlcv;
     } catch (error) {
       console.log(error);
@@ -62,50 +69,35 @@ class Ticker {
         document.getElementById("chart")
       );
       const candleStickData = await this.fetchCandles(this.symbol);
-      let candles = mapCandlestickData(candleStickData);
+      let candles = await mapCandlestickData(candleStickData);
       const mainSeries = this.chart.addCandlestickSeries();
       mainSeries.setData(candles);
       this.chart.timeScale().fitContent();
     }
   }
+  clearInstance() {
+    if (this.fetchTimer) {
+      clearTimeout(this.fetchTimer);
+      this.fetchTimer = null;
+    }
+    if (this.chart) {
+      this.chart.remove();
+      this.chart = null;
+    }
+  }
 }
 
-let cryptoCoin = new Ticker(tickerValue)
-cryptoCoin.generateAllData()
+
+// let cryptoCoin = new Ticker(tickerValue)
+// await cryptoCoin.generateAllData()
 
 //////////////////////////////////////////////////////////////////////////////
 
-// async function generateAllData(ticker = "BTC/USDT:USDT") {
-//   await clearChartContainer(container);
-//   await populateChart(ticker);
-//   await fetchBitcoinPrice(ticker);
-// }
+document.addEventListener("DOMContentLoaded", async (event) => {
+  let cryptoCoin = new Ticker()
+  await cryptoCoin.generateAllData()
+});
 
-// async function fetchBitcoinPrice(tickerInput) {
-//   try {
-//     const ticker = await blofin.fetchTicker(tickerInput);
-
-//     document.getElementById(
-//       "coin-stats"
-//     ).innerText = `$${ticker.info.instId} Statistics`;
-//     const statsList = document.getElementById("stats");
-//     statsList.innerHTML = "";
-
-//     Object.entries(ticker).forEach(([key, value]) => {
-//       const li = document.createElement("li");
-//       if (value !== undefined && key !== "info") {
-//         li.textContent = `${capitalizeWords(key)}: ${value}`;
-//         statsList.appendChild(li);
-//       }
-//     });
-//   } catch (error) {
-//     console.error("Error fetching ticker:", error);
-//     document.getElementById("coin-stats").innerText =
-//       "Error fetching price. Please try again.";
-//   }
-
-//   setTimeout(() => fetchBitcoinPrice(tickerInput), 500);
-// }
 
 
 
@@ -132,32 +124,9 @@ async function fetchTickers() {
   }
 }
 
-// function fetchCandles(ticker) {
-//   console.log(ticker);
-//   try {
-//     let ohlcv = blofin.fetchOHLCV(ticker, "1D", (limit = 200));
-//     return ohlcv;
-//   } catch (error) {
-//     console.log(error);
-//   }
-// }
 
-// async function populateChart(ticker) {
-//   let chart = null;
-//   if (!chart) {
-//     let container = document.querySelector("#chart");
-//     const chart = LightweightCharts.createChart(
-//       document.getElementById("chart")
-//     );
-//     const candleStickData = await fetchCandles(ticker);
-//     let candles = mapCandlestickData(candleStickData);
-//     const mainSeries = chart.addCandlestickSeries();
-//     mainSeries.setData(candles);
-//     chart.timeScale().fitContent();
-//   }
-// }
 
-function mapCandlestickData(data) {
+async function mapCandlestickData(data) {
   return data.map((candle) => ({
     time: new Date(candle[0]).toISOString().replace("T", " ").split(".")[0],
     open: candle[1],
@@ -180,33 +149,7 @@ function capitalizeWords(str) {
     .join(" ");
 }
 
-async function matchInputList(list) {
-  const input = document.querySelector("input");
-  const autocompleteContainer = document.createElement("div");
-  autocompleteContainer.classList.add("autocomplete-container");
-  input.parentNode.appendChild(autocompleteContainer);
 
-  input.addEventListener("input", function () {
-    const value = input.value.toUpperCase();
-    autocompleteContainer.innerHTML = ""; // Clear previous suggestions
-    if (!value) return;
-
-    if (value.length >= 3) {
-      const filteredList = list.filter((ticker) => ticker.includes(value));
-      filteredList.forEach((ticker) => {
-        const item = document.createElement("div");
-        item.classList.add("autocomplete-item");
-        item.textContent = ticker;
-        item.addEventListener("click", function () {
-          input.value = ticker;
-          autocompleteContainer.innerHTML = ""; // Clear suggestions on selection
-        });
-        autocompleteContainer.appendChild(item);
-      });
-    }
-  });
-}
-matchInputList(tickerList);
 
 async function fillNavBar(list) {
   await fetchTickers();
@@ -220,9 +163,14 @@ async function fillNavBar(list) {
     a.href = "#";
     a.textContent = ticker.split("/")[0];
     a.addEventListener("click", async function (event) {
-      // event.preventDefault();
-      tickerValue = ticker;
-      await generateAllData(ticker);
+      event.preventDefault();
+      // tickerValue = ticker;
+      if (currentTickerInstance) {
+        currentTickerInstance.clearInstance();
+        currentTickerInstance = null;
+      }
+      currentTickerInstance = new Ticker(ticker);
+      await currentTickerInstance.generateAllData();
     });
 
     const star = document.createElement("i");
@@ -265,12 +213,5 @@ document
     }
   });
 
-// Initial fill
 fillNavBar(tickerList);
-
-tickerSelect.addEventListener('change', (event) => {
-  const newTicker = event.target.value;
-  const tickerInstance = new Ticker(newTicker);
-  tickerInstance.generateAllData();
-});
 
