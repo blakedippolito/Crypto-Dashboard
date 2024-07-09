@@ -1,6 +1,5 @@
 //GLOBAL VARIABLES//
 const blofin = new ccxt.blofin();
-console.log(blofin);
 let tickerList = [];
 
 const tickerSelect = document.getElementById("ticker-select");
@@ -13,6 +12,7 @@ const savedFavorites = JSON.parse(localStorage.getItem("favorites")) || {};
 class Ticker {
   constructor(symbol) {
     this.symbol = symbol;
+    this.chart=null;
   }
 
   async fetchBitcoinPrice() {
@@ -37,7 +37,7 @@ class Ticker {
       document.getElementById("coin-stats").innerText =
         "Error fetching price. Please try again.";
     }
-    setTimeout(() => fetchBitcoinPrice(this.symbol), 500);
+    setTimeout(() => this.fetchBitcoinPrice(this.symbol), 500);
   }
 
   async generateAllData () {
@@ -47,9 +47,9 @@ class Ticker {
   }
 
   async fetchCandles() {
-    console.log(this.symbol);
     try {
-      let ohlcv = blofin.fetchOHLCV(this.symbol, "1D", (limit = 200));
+      let ohlcv = blofin.fetchOHLCV(this.symbol, "1D");
+      console.log(ohlcv)
       return ohlcv;
     } catch (error) {
       console.log(error);
@@ -57,20 +57,21 @@ class Ticker {
   }
 
   async  populateChart() {
-    let chart = null;
-    if (!chart) {
-      const chart = LightweightCharts.createChart(
+    if (!this.chart) {
+      this.chart = LightweightCharts.createChart(
         document.getElementById("chart")
       );
       const candleStickData = await this.fetchCandles(this.symbol);
       let candles = mapCandlestickData(candleStickData);
-      const mainSeries = chart.addCandlestickSeries();
+      const mainSeries = this.chart.addCandlestickSeries();
       mainSeries.setData(candles);
-      chart.timeScale().fitContent();
+      this.chart.timeScale().fitContent();
     }
   }
 }
 
+let cryptoCoin = new Ticker(tickerValue)
+cryptoCoin.generateAllData()
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -141,20 +142,20 @@ async function fetchTickers() {
 //   }
 // }
 
-async function populateChart(ticker) {
-  let chart = null;
-  if (!chart) {
-    let container = document.querySelector("#chart");
-    const chart = LightweightCharts.createChart(
-      document.getElementById("chart")
-    );
-    const candleStickData = await fetchCandles(ticker);
-    let candles = mapCandlestickData(candleStickData);
-    const mainSeries = chart.addCandlestickSeries();
-    mainSeries.setData(candles);
-    chart.timeScale().fitContent();
-  }
-}
+// async function populateChart(ticker) {
+//   let chart = null;
+//   if (!chart) {
+//     let container = document.querySelector("#chart");
+//     const chart = LightweightCharts.createChart(
+//       document.getElementById("chart")
+//     );
+//     const candleStickData = await fetchCandles(ticker);
+//     let candles = mapCandlestickData(candleStickData);
+//     const mainSeries = chart.addCandlestickSeries();
+//     mainSeries.setData(candles);
+//     chart.timeScale().fitContent();
+//   }
+// }
 
 function mapCandlestickData(data) {
   return data.map((candle) => ({
@@ -267,27 +268,9 @@ document
 // Initial fill
 fillNavBar(tickerList);
 
-// tickerSelect.addEventListener('change', async function() {
-//   const tickerSymbol = tickerSelect.value.trim();
+tickerSelect.addEventListener('change', (event) => {
+  const newTicker = event.target.value;
+  const tickerInstance = new Ticker(newTicker);
+  tickerInstance.generateAllData();
+});
 
-//   if (tickerSymbol) {
-//       tickerValue = tickerSymbol + '/USDT:USDT'; // Update global variable
-
-//       if (window.priceInterval) {
-//           clearInterval(window.priceInterval);
-//       }
-
-//       await fetchBitcoinPrice(tickerValue);
-
-//       await clearChartContainer(container)
-//       await populateChart(tickerValue)
-
-//       ohlcv = []
-
-//       window.priceInterval = setInterval(async function() {
-//           await fetchBitcoinPrice(tickerValue);
-//       }, 1000);
-//   } else {
-//       alert('Please select a ticker.');
-//   }
-// });
